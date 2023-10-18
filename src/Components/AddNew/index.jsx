@@ -7,8 +7,7 @@ import TextArea from "antd/es/input/TextArea";
 
 const { RangePicker } = DatePicker;
 
-
-// Added a custom Join method so that, the excluded Dates list gets converted to 
+// Added a custom Join method so that, the excluded Dates list gets converted to
 // the desired format. Which can be later used to display or add to the table.
 
 Array.prototype.customJoin = function (s) {
@@ -21,14 +20,13 @@ Array.prototype.customJoin = function (s) {
 };
 
 const AddNew = ({ reportData, setReportData }) => {
-
   const [date, setDate] = useState(null);
   const [disable, setDisable] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [excludedDate, setExcludedDate] = useState("");
   const [excludedDateList, setExcludedDateList] = useState([]);
   const [excludedDateListString, setExcludedDateListString] = useState("N/A");
-  const [leadCount, setLeadCount] = useState('');
+  const [leadCount, setLeadCount] = useState("");
   const [expectedDRR, setExpectedDRR] = useState("");
 
   // As the name says, this function is used to show the modal, in which all the input fields to add a new data are there.
@@ -47,7 +45,7 @@ const AddNew = ({ reportData, setReportData }) => {
       endDate: dayjs(date[1]).format("YYYY-MM-DD"),
       monthYear: `${date[1].month() + 1}, ${date[1].year()}`,
       datesExcluded: excludedDateListString,
-      numberOfDays: date[1].diff(date[0], "day") + 1,
+      numberOfDays: date[1].diff(date[0], "day") + 1 - excludedDateList.length,
       leadCount: leadCount,
       expectedDRR: expectedDRR,
       lastUpdated: new Date(),
@@ -65,7 +63,7 @@ const AddNew = ({ reportData, setReportData }) => {
   };
 
   // This function is triggered when the user clicks on "Yes" button on the pop-confirm object.
-  // This function is called to convert the excluded dates list to a string which can be shown to the user in 
+  // This function is called to convert the excluded dates list to a string which can be shown to the user in
   // an input field.
   const confirm = () => {
     setExcludedDate("");
@@ -73,18 +71,17 @@ const AddNew = ({ reportData, setReportData }) => {
     message.success("Done");
   };
 
-  // This useEffect runs as soon as excludedDateList gets updated, to avoid bugs caused by 
+  // This useEffect runs as soon as excludedDateList gets updated, to avoid bugs caused by
   // continuous asynchronous method calls.
-  useEffect(() =>{
+  useEffect(() => {
     setExcludedDateListString(excludedDateList.customJoin(", "));
-  }, [excludedDateList])
+  }, [excludedDateList]);
 
   // This function is used to disable the dates based on different conditions.
-  // this function returns a boolean value which tells the ant design date picker component whether or not 
+  // this function returns a boolean value which tells the ant design date picker component whether or not
   // to disable the date.
   const disabledDate = (current) => {
-
-    // This piece of code is used to disable all the dates that are 
+    // This piece of code is used to disable all the dates that are
     // excluded by the user. i.e. the user cannot select an already excluded date again.
     if (excludedDateList.length > 0) {
       for (const date of excludedDateList) {
@@ -92,7 +89,7 @@ const AddNew = ({ reportData, setReportData }) => {
       }
     }
 
-    // This code will disable all the dates that come before the start date ( date[0] ), or 
+    // This code will disable all the dates that come before the start date ( date[0] ), or
     // all the dates that comes after end date ( date[1] )
     return (
       current &&
@@ -100,7 +97,7 @@ const AddNew = ({ reportData, setReportData }) => {
     );
   };
 
-  // this method disables all the date that come before the present date. 
+  // this method disables all the date that come before the present date.
   // This is to prevent users from selecting date that has already been passed.
   const disablePrevDates = (current) => {
     return current && current.isBefore(dayjs().subtract(1, "day"));
@@ -112,7 +109,7 @@ const AddNew = ({ reportData, setReportData }) => {
     if (!e) return;
     setDate([e[0], e[1]]);
 
-    // this method controls whether the exclude date input should be disabled 
+    // this method controls whether the exclude date input should be disabled
     // or not. This is to prevent users from excluding dates before the user
     // picks a start and end date.
     setDisable(false);
@@ -124,16 +121,17 @@ const AddNew = ({ reportData, setReportData }) => {
     setExcludedDate(e);
   }
 
-  // This function gets called when the user clicks on the "Add" button next 
-  // to the exclude date date-picker. 
+  // This function gets called when the user clicks on the "Add" button next
+  // to the exclude date date-picker.
   function addToExcludedDateList() {
-
     // This code first spreads the already existing excludedDataList, and then adds
     // the new value into it, then returns the new array.
-    setExcludedDateList((excludedDateList) => [
-      ...excludedDateList,
-      excludedDate,
-    ]);
+    setExcludedDateList((excludedDateList) =>
+      [...excludedDateList, excludedDate].sort((a, b) => {
+        if (b.isBefore(a)) return 1;
+        else return -1;
+      })
+    );
   }
 
   // whenever the user enters lead count, this method gets called which calculates the DRR.
@@ -159,11 +157,11 @@ const AddNew = ({ reportData, setReportData }) => {
   // This function resets all the input fields to default after the user successfully submits the data.
   function resetForm() {
     setDate(null);
-    setLeadCount('');
-    setExpectedDRR('');
+    setLeadCount("");
+    setExpectedDRR("");
     setExcludedDate(null);
     setExcludedDateList([]);
-    setExcludedDateListString('N/A');
+    setExcludedDateListString("N/A");
   }
 
   return (
@@ -222,10 +220,7 @@ const AddNew = ({ reportData, setReportData }) => {
               okText="Yes"
               cancelText="No"
             >
-              <Button
-                type="primary"
-                disabled={excludedDate ? false : true}
-              >
+              <Button type="primary" disabled={excludedDate ? false : true}>
                 Add
               </Button>
             </Popconfirm>

@@ -1,5 +1,5 @@
-import { Table } from "antd";
 import dayjs from "dayjs";
+import { Table } from "antd";
 import './style.css'
 const ReportTable = ({ reportData }) =>{
     
